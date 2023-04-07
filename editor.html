@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>SDAP - Editable JSON</title>
+  <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+  <h1>SDAP - Editable JSON</h1>
+  <span id="connection-settings">
+    <button id="createRoom" type="button">Create Room</button>
+    <input id="roomName">
+    <button id="joinRoom" type="button">Join Room</button>
+  </span>
+  <textarea id="json-data" style="resize:none" oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"' rows="10" cols="80"></textarea>
+  <button id="edit-button">Edit</button>
+  <script src="editor.js"></script>
+</body>
+</html>

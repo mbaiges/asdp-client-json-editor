@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>SDAP - JSON Visualizer</title>
+  <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+  <h1>SDAP - JSON Visualizer</h1>
+  <span id="connection-settings">
+    <input id="roomName">
+    <button id="joinRoom" type="button">Join Room</button>
+  </span>
+  <div id="json-visualizer">
+    <h2>Visualizer</h2>
+    <textarea readonly style="resize:none" oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"' rows="10" cols="80" id="json-visualizer-content"></textarea>
+  </div>
+  <script src="visualizer.js"></script>
+</body>
+</html>
