@@ -570,7 +570,13 @@ function loadEditor(schema, data) {
     input.addEventListener('change', () => {
       // Update the corresponding property in the JavaScript object
       const path = getPath(input);
-      const value = parseValue(input.value);
+      let value = parseValue(input.value);
+      const s = traverseSchema(schema, getPointer(path));
+
+      if (s.type === 'string') { // Converts whatever it is in the input, to string
+        value = value.toString();
+      }
+
       setProperty(screen, path, value);
 
       if (!roomJoined) {
