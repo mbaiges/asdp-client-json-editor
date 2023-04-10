@@ -1,34 +1,39 @@
 // Fetch the JSON data from a server or a file
 const jsonData = {
-  "name": "John",
-  "age": 30,
-  "address": {
-    "street": "123 Main St",
-    "city": "Anytown",
-    "state": "CA",
-    "zip": "12345"
-  },
-  "prop1": {
-    "prop2": {
-      "prop3": {
-        "prop4": {
-          "prop5": {
-            "prop6": {
-              "prop7": {
-                "prop8": {
-                  "prop9": {
-                    "prop10": "value"
-                  }
-                }
-              }
-            }
-          }
+  "string": "hello",
+  "number": 42,
+  "boolean": true,
+  "array": [1, 2, 3],
+  "object": {
+    "key": "value"
+  }
+};
+
+const jsonSchema = {
+  "type": "object",
+  "properties": {
+    "string": {
+      "type": "string"
+    },
+    "number": {
+      "type": "number"
+    },
+    "boolean": {
+      "type": "boolean"
+    },
+    "array": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "object": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
         }
-      },
-      "array": [
-        "val1",
-        "val2"
-      ]
+      }
     }
   }
 };
@@ -39,6 +44,7 @@ const SDAP_MESSAGE_TYPE = {
   HELLO:       'hello',
   CREATE:      'create',
   GET:         'get',
+  SCHEMA:      'schema',
   UPDATE:      'update',
   SUBSCRIBE:   'subscribe',
   UNSUBSCRIBE: 'unsubscribe',
@@ -48,7 +54,7 @@ const SDAP_MESSAGE_TYPE = {
 /* Rendering functions */
 
 // Renders a JavaScript object as a tree structure of nested lists and input fields
-function renderData(element, data) {
+function renderData(element, schema, data, current_path) {
   element.innerHTML = '';
   for (const key in data) {
     if (data.hasOwnProperty(key)) {
@@ -57,16 +63,49 @@ function renderData(element, data) {
       const label = document.createElement('label');
       label.textContent = key;
       li.appendChild(label);
+
+      current_path.push(key); // Adds to context
       if (typeof value === 'object') {
         const ul = document.createElement('ul');
-        renderData(ul, value);
+        renderData(ul, schema, value, current_path);
         li.appendChild(ul);
       } else {
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = stringifyValue(value);
-        li.appendChild(input);
+        const ptr = getPointer(current_path);
+        const s = traverseSchema(schema, ptr);
+
+        let e;
+        switch(s.type) {
+          case 'string':
+            e = document.createElement('input');
+            e.type = 'text';
+            e.value = stringifyValue(value);
+            break;
+          case 'number':
+            e = document.createElement('input');
+            e.type = 'number';
+            e.step = 0.001;
+            e.value = stringifyValue(value);
+            break;
+          case 'boolean':
+            e = document.createElement('select');
+            const optionTrue = document.createElement('option');
+            optionTrue.innerHTML = 'true';
+            const optionFalse = document.createElement('option');
+            optionFalse.innerHTML = 'false';
+            e.appendChild(optionTrue);
+            e.appendChild(optionFalse);
+            v = stringifyValue(value);
+            if (v === 'true') {
+              optionTrue.selected = true;
+            } else if (v === 'false') {
+              optionFalse.selected = false;
+            }
+            break;
+        }
+        e.classList.add("customInput");
+        li.appendChild(e);
       }
+      current_path.pop(); // removes from context
       element.appendChild(li);
     }
   }
@@ -120,6 +159,34 @@ function getPointer(path) {
   return '/' + path.map(encodeURIComponent).join('/');
 }
 
+// Traverses the schema using the pointer
+function traverseSchema(s, pointer) {
+  let segments = pointer.split("/").slice(1);
+  let currSchema = s;
+
+  for (let segment of segments) {
+    segment = segment.replace(/~1/g, "/").replace(/~0/g, "~");
+    // If schema does not exist
+    if (!schema) {
+      return undefined;
+    }
+    // If the current schema is an object, access its property
+    else if (currSchema.type === "object") {
+      currSchema = currSchema.properties[segment];
+    }
+    // If the current schema is an array, access its items
+    else if (currSchema.type === "array") {
+      currSchema = currSchema.items;
+    }
+    // pointer is invalid
+    else {
+      return undefined;
+    }
+  }
+
+  return currSchema;
+}
+
 /* WebSockets */
 const WEBSOCKETS_SERVER = "ws://localhost:9000";
 
@@ -171,26 +238,29 @@ function wsConfigure() {
       console.log('Message from server', data);
       switch(data.type) {
           case SDAP_MESSAGE_TYPE.HELLO:
-              helloed(data);
-              break;
+            helloed(data);
+            break;
           case SDAP_MESSAGE_TYPE.CREATE:
-              roomCreated(data);
-              break;
+            roomCreated(data);
+            break;
           case SDAP_MESSAGE_TYPE.GET:
-              roomAcquired(data);
-              break;
+            roomAcquired(data);
+            break;
+          case SDAP_MESSAGE_TYPE.SCHEMA:
+            roomSchemaAcquired(data);
+            break;
           case SDAP_MESSAGE_TYPE.UPDATE:
-              roomUpdated(data);
-              break;
+            roomUpdated(data);
+            break;
           case SDAP_MESSAGE_TYPE.SUBSCRIBE:
-              subscribed(data);
-              break;
+            subscribed(data);
+            break;
           case SDAP_MESSAGE_TYPE.UNSUBSCRIBE:
-              unsubscribed(data);
-              break;
+            unsubscribed(data);
+            break;
           case SDAP_MESSAGE_TYPE.CHANGES:
-              roomChanged(data);
-              break;
+            roomChanged(data);
+            break;
       }
   });
 }
@@ -224,14 +294,12 @@ function createRoom() {
       unsubscribeToRoomChanges(roomName);
   }
   if (!textAreaDeleted) {
+    schema = parseValue(jsonSchemaTextArea.value);
     screen = parseValue(jsonDataTextArea.value);
   }
   const msg = {
       type: SDAP_MESSAGE_TYPE.CREATE,
-      schema: {
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "type": "any"
-      },
+      schema: schema,
       value: screen
   };
   
@@ -252,8 +320,10 @@ function roomCreated(data) {
   }
   console.log(`Room with name '${roomName}' created successfully.`);
   subscribeToRoomChanges(roomName);
+  schema = created.schema;
   screen = created.value;
-  loadEditor(screen);
+  roomJoined = true;
+  loadEditor(schema, screen);
 }
 
 ////////////////////
@@ -277,7 +347,26 @@ function roomAcquired(data) {
   lastChangeId = data.lastChangeId;
   lastChangeAt = data.lastChangeAt;
   screen = room;
-  loadEditor(screen);
+  roomJoined = true;
+  loadEditor(schema, screen);
+}
+
+////////////////////
+// SCHEMA
+////////////////////
+
+function getRoomSchema(name) {
+  console.log(`Getting schema for room name '${name}'`);
+  const msg = {
+      type: SDAP_MESSAGE_TYPE.SCHEMA,
+      name: roomName
+  };
+  socket.send(JSON.stringify(msg));
+}
+
+function roomSchemaAcquired(data) {
+  schema = data.schema;
+  console.log(`Received room schema name '${data.name}'`);
 }
 
 ////////////////////
@@ -368,7 +457,7 @@ function roomChanged(data) {
           if (op.type == 'set') { // Only supported right now
             const path = ptr.split("/").slice(1);
             setProperty(screen, path, op.value);
-            loadEditor(screen);
+            loadEditor(schema, screen);
           }
       }
 
@@ -398,6 +487,7 @@ function joinRoom() {
 
   roomName = roomNameInput.value;
   console.log(`Joining room name '${roomName}'`);
+  getRoomSchema(roomName);
   getRoom(roomName);
   subscribeToRoomChanges(roomName);
 }
@@ -408,13 +498,14 @@ var roomName = null;
 
 /* Live data */
 var screen;
+var roomJoined = false;
 
 /* UI */
 
 var textAreaDeleted = false;
 var oldRootElement = null, rootElement = null;
 
-function loadEditor(data) {
+function loadEditor(schema, data) {
   // Hide the button
   editButton.style.display = 'none';
   textAreaDeleted = true;
@@ -425,24 +516,27 @@ function loadEditor(data) {
     var oldRootElement = rootElement;
   }
   rootElement = document.createElement('ul');
-  renderData(rootElement, data);
+  renderData(rootElement, schema, data, []);
 
   // Replace the text area with the tree structure
   if (oldRootElement) {
     oldRootElement.replaceWith(rootElement);
   } else {
-    jsonDataTextArea.replaceWith(rootElement);
+    editors.replaceWith(rootElement);
   }
   
   // Attach event listeners to the input fields
-  const inputs = rootElement.querySelectorAll('input');
+  const inputs = rootElement.querySelectorAll('.customInput');
   inputs.forEach(input => {
     input.addEventListener('change', () => {
-      console.log("Changed something");
       // Update the corresponding property in the JavaScript object
       const path = getPath(input);
       const value = parseValue(input.value);
       setProperty(screen, path, value);
+
+      if (!roomJoined) {
+        return; // If not joined, then everything is offline.
+      }
 
       // Call the callback function with the JSON Pointer
       const pointer = getPointer(path);
@@ -465,9 +559,13 @@ function uiConfigure() {
   if (editButton) {
     editButton.addEventListener('click', () => {
       // Parse the JSON data into a JavaScript object
+      schema = JSON.parse(jsonSchemaTextArea.value);
       const data = JSON.parse(jsonDataTextArea.value);
+      screen = data;
 
-      loadEditor(data);
+      clickedOnEdit = true;
+
+      loadEditor(schema, data);
     });
   }
   
@@ -495,13 +593,16 @@ function onLoad() {
   joinRoomBtn   = document.getElementById("joinRoom");
   roomNameInput   = document.getElementById("roomName");
 
+  editors               = document.getElementById('editors');
+  jsonSchemaTextArea    = document.getElementById('json-schema');
   jsonDataTextArea      = document.getElementById('json-data');
   editButton            = document.getElementById('edit-button');
 
-  // Set the initial JSON data in the text area
+  // Set the initial JSON Schema and JSON data in the text area
+  jsonSchemaTextArea.value = JSON.stringify(jsonSchema, null, 2);
+
   screen = jsonData;
   jsonDataTextArea.value = JSON.stringify(jsonData, null, 2);
-  jsonDataTextArea.style.height = "";jsonDataTextArea.style.height = jsonDataTextArea.scrollHeight + "px";
 
   // Configure WS Connection
   wsConfigure();

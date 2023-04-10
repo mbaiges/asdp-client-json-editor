@@ -14,10 +14,31 @@ h1 {
     margin-bottom: 20px;
 }
     
-#json-data {
+#editors {
     display: block;
     width: 100%;
     margin-bottom: 20px;
+}
+
+.json-definer {
+    display: inline-block;
+    width: 90%;
+    resize: none; 
+    white-space: nowrap;
+}
+
+.inline-div {
+    display:inline-block;
+}
+.inline-txtarea {
+    resize: none;
+    border : 2px solid red;
+    height:125px;
+}
+
+.json-editors {
+    display: inline-block;
+    width: 48%;
 }
     
 ul {
@@ -37,7 +58,15 @@ label {
     margin-right: 10px;
 }
     
-input[type="text"] {
+input {
+    /* display: block; */
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-sizing: border-box;
+}
+
+select {
     /* display: block; */
     padding: 5px;
     border: 1px solid #ccc;

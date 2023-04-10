@@ -12,7 +12,16 @@
     <input id="roomName">
     <button id="joinRoom" type="button">Join Room</button>
   </span>
-  <textarea id="json-data" style="resize:none" oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"' rows="10" cols="80"></textarea>
+  <span id="editors">
+    <div class="json-editors">
+      <h2>Schema</h2>
+      <textarea id="json-schema" class="json-definer" rows="20" cols="40"></textarea>
+    </div>
+    <div class="json-editors">
+      <h2>Data</h2>
+      <textarea id="json-data" class="json-definer" rows="20" cols="40"></textarea>
+    </div>
+  </span>
   <button id="edit-button">Edit</button>
   <script src="editor.js"></script>
 </body>
