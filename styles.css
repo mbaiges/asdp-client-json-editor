@@ -39,6 +39,14 @@ h1 {
     margin-right: 10px;
 }
 
+#errors {
+    display: block;
+    color: red;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 15px;
+}
+
 .inline-div {
     display:inline-block;
 }

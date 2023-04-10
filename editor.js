@@ -312,6 +312,25 @@ function createRoom() {
 }
 
 function roomCreated(data) {
+  if (data.status !== 201) {
+    msg = "";
+    if ('errors' in data) {
+      for (let e of data.errors) {
+        if (msg !== "") {
+          msg += '\n';
+        }
+        let m = e.msg ? e.msg : "";
+        const regex = /[0-9]: instance/i;
+        m = m.replace(regex, "");
+        m = m.replace(".", "/");
+        msg += `[${e.code}] ${m}`;
+      }
+    }
+    errorsSpan.innerHTML = msg;
+    return;
+  }
+  errorsSpan.innerHTML = '';
+
   const created = data.created;
   roomName = created.name;
   console.log("Room " + roomName)
@@ -390,6 +409,26 @@ function roomUpdated(data) {
       console.log(`Room name '${data.name}' was updated`);
       console.log("Update results:");
       console.log(data.results);
+      if (data.status !== 200) {
+        msg = "";
+        for (let r of data.results) {
+          if ('errors' in r) {
+            for (let e of r.errors) {
+              if (msg !== "") {
+                msg += '\n';
+              }
+              let m = e.msg ? e.msg : "";
+              const regex = /[0-9]: instance/i;
+              m = m.replace(regex, "");
+              m = m.replaceAll(".", "/");
+              msg += `[${e.code}] ${m}`;
+            }
+          }
+        }
+        errorsSpan.innerHTML = msg;
+        return;
+      }
+      errorsSpan.innerHTML = '';
       if (data.results) {
           for (let result of data.results) {
               const change = {
@@ -637,6 +676,8 @@ function onLoad() {
   createRoomBtn = document.getElementById("createRoom");
   joinRoomBtn   = document.getElementById("joinRoom");
   roomNameInput   = document.getElementById("roomName");
+
+  errorsSpan            = document.getElementById('errors');
 
   editors               = document.getElementById('editors');
   jsonSchemaTextArea    = document.getElementById('json-schema');
