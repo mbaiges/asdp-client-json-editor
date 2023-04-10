@@ -550,6 +550,43 @@ function loadEditor(schema, data) {
   });
 }
 
+// Schema infer
+function inferSchema(json) {
+  let schema = {};
+
+  if (json === null) {
+    schema.type = "null";
+  } else if (typeof json === "string") {
+    schema.type = "string";
+  } else if (typeof json === "number") {
+    schema.type = "number";
+  } else if (typeof json === "boolean") {
+    schema.type = "boolean";
+  } else if (typeof json === "object") {
+    // If it's an array
+    if (Array.isArray(json)) {
+      schema.type = "array";
+      if (json.length > 0) {
+        schema.items = inferSchema(json[0]);
+      }
+    // If it's an object
+    } else {
+      schema.type = "object";
+      
+      if (Object.keys(json).length !== 0) {
+        schema.properties = {};
+        for (let k in json) {
+          schema.properties[k] = inferSchema(json[k]);
+        }
+      }
+    }
+  } else {
+    schema.type = "null";
+  }
+
+  return schema;
+}
+
 function uiConfigure() {
   if (!socket) {
       return;
@@ -566,6 +603,14 @@ function uiConfigure() {
       clickedOnEdit = true;
 
       loadEditor(schema, data);
+    });
+  }
+
+  if (inferButton) {
+    inferButton.addEventListener('click', () => {
+      const data = JSON.parse(jsonDataTextArea.value);
+      const s = inferSchema(data);
+      jsonSchemaTextArea.value = JSON.stringify(s, null, 2);
     });
   }
   
@@ -596,6 +641,7 @@ function onLoad() {
   editors               = document.getElementById('editors');
   jsonSchemaTextArea    = document.getElementById('json-schema');
   jsonDataTextArea      = document.getElementById('json-data');
+  inferButton           = document.getElementById('inferSchema');
   editButton            = document.getElementById('edit-button');
 
   // Set the initial JSON Schema and JSON data in the text area

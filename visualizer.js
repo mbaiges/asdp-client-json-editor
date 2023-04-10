@@ -36,7 +36,6 @@ function setProperty(obj, path, value) {
   let currentObj = obj;
   for (let i = 0; i < path.length - 1; i++) {
     const key = path[i];
-    console.log(key)
     currentObj = currentObj[key];
   }
   const lastKey = path[path.length - 1];
@@ -114,7 +113,7 @@ function wsConfigure() {
   // Listen for messages
   socket.addEventListener('message', (event) => {
       const data = JSON.parse(event.data);
-      console.log('Message from server', data);
+      // console.log('Message from server', data);
       switch(data.type) {
           case SDAP_MESSAGE_TYPE.HELLO:
               helloed(data);
@@ -164,7 +163,7 @@ function helloed(data) {
 ////////////////////
 
 function createRoom() {
-  console.log("Creating room");
+  // console.log("Creating room");
   if (roomName) {
       // unsubscribe
       unsubscribeToRoomChanges(roomName);
@@ -183,11 +182,11 @@ function createRoom() {
 function roomCreated(data) {
   const created = data.created;
   roomName = created.name;
-  console.log("Room " + roomName)
+  // console.log("Room " + roomName)
   if (roomName) {
       roomNameInput.value = roomName;
   }
-  console.log(`Room with name '${roomName}' created successfully.`);
+  // console.log(`Room with name '${roomName}' created successfully.`);
   subscribeToRoomChanges(roomName);
 }
 
@@ -196,7 +195,7 @@ function roomCreated(data) {
 ////////////////////
 
 function getRoom(name) {
-  console.log(`Getting value for room name '${name}'`);
+  // console.log(`Getting value for room name '${name}'`);
   const msg = {
       type: SDAP_MESSAGE_TYPE.GET,
       name: roomName
@@ -206,9 +205,9 @@ function getRoom(name) {
 
 function roomAcquired(data) {
   const room = data.value;
-  console.log(`Received room name '${data.name}'`);
-  console.log("Room:");
-  console.log(room);
+  // console.log(`Received room name '${data.name}'`);
+  // console.log("Room:");
+  // console.log(room);
   lastChangeId = data.lastChangeId;
   lastChangeAt = data.lastChangeAt;
   screen = room;
@@ -220,7 +219,7 @@ function roomAcquired(data) {
 ////////////////////
 
 function updateRoom(name, update) {
-  console.log(`Updating room name '${name}'`);
+  // console.log(`Updating room name '${name}'`);
   const msg = {
       type:    SDAP_MESSAGE_TYPE.UPDATE,
       name:    roomName,
@@ -233,9 +232,9 @@ function updateRoom(name, update) {
 
 function roomUpdated(data) {
   if (data.name == roomName) {
-      console.log(`Room name '${data.name}' was updated`);
-      console.log("Update results:");
-      console.log(data.results);
+      // console.log(`Room name '${data.name}' was updated`);
+      // console.log("Update results:");
+      // console.log(data.results);
       if (data.results) {
           for (let result of data.results) {
               const change = {
@@ -293,9 +292,9 @@ function unsubscribed(data) {
 
 function roomChanged(data) {
   const changes = data.changes;
-  console.log(`Received changes from room name '${data.name}'`);
-  console.log("Changes:");
-  console.log(changes);
+  // console.log(`Received changes from room name '${data.name}'`);
+  // console.log("Changes:");
+  // console.log(changes);
   for (const change of changes) {
       const ops = change.ops;
       for (const ptr in ops) {
@@ -304,6 +303,7 @@ function roomChanged(data) {
             const path = ptr.split("/").slice(1);
             setProperty(screen, path, op.value);
             renderData(screen);
+            console.log(`[SET] ${getPointer(path)}: ${op.value}`);
           }
       }
 

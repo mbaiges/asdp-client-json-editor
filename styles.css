@@ -22,9 +22,21 @@ h1 {
 
 .json-definer {
     display: inline-block;
-    width: 90%;
+    width: 100%;
     resize: none; 
     white-space: nowrap;
+}
+
+#inferSchemaContainer {
+    display: inline-block;
+    text-align: center;
+    vertical-align: middle;
+}
+
+#inferSchema {
+    margin: auto;
+    margin-left: 10px;
+    margin-right: 10px;
 }
 
 .inline-div {
@@ -38,7 +50,7 @@ h1 {
 
 .json-editors {
     display: inline-block;
-    width: 48%;
+    width: 40%;
 }
     
 ul {
