@@ -1,2 +1,2 @@
-# asdp-client-json-editor
-Aggregation Self-Described Protocol - Client - JSON Editor
+# sdap-client-json-editor
+Self-Described Aggregation Protocol - Client - JSON Editor
